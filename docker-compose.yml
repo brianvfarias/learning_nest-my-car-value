@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: mycv_db
+    ports:
+      - '5431:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_pass
+      - POSTGRES_DB=mycv
+    volumes:
+      - mycv_postgres_data:/var/lib/postgresql/
+
+volumes:
+  mycv_postgres_data:
