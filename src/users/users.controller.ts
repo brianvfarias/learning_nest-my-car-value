@@ -12,6 +12,7 @@ import {
   Query,
   Session,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -61,8 +62,8 @@ export class UsersController {
   }
 
   @Get('whoami')
-  async whoAmI(@Session() session: any) {
-    if (!session.userId) throw new UnauthorizedException();
+  async whoami(@Session() session: any) {
+    if (!session.userId) throw new ForbiddenException();
     return this.userService.findById(session.userId);
   }
 

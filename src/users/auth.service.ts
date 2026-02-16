@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { Prisma } from 'src/generated/prisma/client';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { randomBytes, scrypt } from 'node:crypto';
 import { promisify } from 'node:util';
