@@ -23,6 +23,8 @@ import { UserDto } from './dtos/user.dto';
 import { AuthService } from './auth.service';
 import { UserNotFoundError } from './errors/user-not-found.error';
 import { UserWrongPasswordError } from './errors/user-wrong-password.error';
+import { SessionsService } from './sessions.service';
+import { AuthGuard } from './guard/auth.guard';
 
 @Controller('auth')
 @Serialize(UserDto)
@@ -30,13 +32,17 @@ export class UsersController {
   constructor(
     private readonly userService: UsersService,
     private readonly authService: AuthService,
+    private readonly sessionService: SessionsService,
   ) {}
 
   @Post('signup')
   async createUser(@Body() body: CreateUserDto, @Session() session: any) {
     try {
-      const user = await this.authService.signup(body);
-      session.userId = user.id;
+      const { loggedSession, user } = await this.authService.signup(body);
+      session.mycv_session = {
+        token: loggedSession.token,
+        id: loggedSession.userId,
+      };
       return user;
     } catch (e) {
       if (e.message === 'Email in use')
@@ -47,9 +53,12 @@ export class UsersController {
   @Post('signin')
   async singinUser(@Body() body: CreateUserDto, @Session() session: any) {
     try {
-      const { id } = await this.authService.signin(body);
-      session.userId = id;
-      return { id };
+      const { loggedSession, user } = await this.authService.signin(body);
+      session.mycv_session = {
+        token: loggedSession.token,
+        id: loggedSession.userId,
+      };
+      return { id: user.id };
     } catch (e) {
       if (e instanceof UserNotFoundError) {
         throw new NotFoundException('Email not found');
@@ -62,14 +71,16 @@ export class UsersController {
   }
 
   @Get('whoami')
+  @UseGuards(AuthGuard)
   async whoami(@Session() session: any) {
-    if (!session.userId) throw new ForbiddenException();
-    return this.userService.findById(session.userId);
+    return this.userService.findById(session.mycv_session.id);
   }
 
   @Post('signout')
   signOut(@Session() session: any) {
-    session.userId = null;
+    this.sessionService.revokeSession(session.mycv_session.token);
+    session.mycv_session = null;
+    return 'User logged out!';
   }
 
   @Get(':id')

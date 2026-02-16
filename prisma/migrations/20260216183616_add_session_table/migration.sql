@@ -1,0 +1,11 @@
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" SERIAL NOT NULL,
+    "token" TEXT NOT NULL,
+    "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updateAt" TIMESTAMP(3) NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "revoked" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
+);

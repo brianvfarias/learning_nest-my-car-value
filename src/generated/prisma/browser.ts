@@ -27,3 +27,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type Report = Prisma.ReportModel
+/**
+ * Model Session
+ * 
+ */
+export type Session = Prisma.SessionModel

@@ -5,12 +5,21 @@ import { randomBytes, scrypt } from 'node:crypto';
 import { promisify } from 'node:util';
 import { UserNotFoundError } from './errors/user-not-found.error';
 import { UserWrongPasswordError } from './errors/user-wrong-password.error';
+import { SessionsService } from './sessions.service';
 
 const _scrypt = promisify(scrypt);
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly sessionService: SessionsService,
+  ) {}
+
+  async handleCreateSession(userId: number) {
+    const loggedSession = await this.sessionService.createSession(userId);
+    return loggedSession;
+  }
 
   async signup({ email, password }: CreateUserDto) {
     const checkUser = await this.usersService.findByEmail(email);
@@ -20,10 +29,12 @@ export class AuthService {
     const hash = (await _scrypt(password, salt, 32)) as Buffer;
 
     const hashedPassword = salt + '.' + hash.toString('hex');
-    return this.usersService.createUser({
+    const user = await this.usersService.createUser({
       email,
       password: hashedPassword,
     });
+    const loggedSession = await this.handleCreateSession(user.id);
+    return { user, loggedSession };
   }
 
   async signin({ email, password }: CreateUserDto) {
@@ -34,6 +45,7 @@ export class AuthService {
     if (storedHash !== hash.toString('hex')) {
       throw new UserWrongPasswordError('User not found');
     }
-    return user;
+    const loggedSession = await this.handleCreateSession(user.id);
+    return { user, loggedSession };
   }
 }
