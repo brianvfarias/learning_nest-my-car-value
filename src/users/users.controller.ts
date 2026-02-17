@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Request,
   Session,
   UnauthorizedException,
   UseGuards,
@@ -23,6 +24,7 @@ import { UserDto } from './dtos/user.dto';
 import { AuthService } from './auth.service';
 import { UserNotFoundError } from './errors/user-not-found.error';
 import { UserWrongPasswordError } from './errors/user-wrong-password.error';
+import { AuthGuard } from './guard/auth.guard';
 
 @Controller('auth')
 @Serialize(UserDto)
@@ -35,8 +37,8 @@ export class UsersController {
   @Post('signup')
   async createUser(@Body() body: CreateUserDto, @Session() session: any) {
     try {
-      const user = await this.authService.signup(body);
-      session.userId = user.id;
+      const { user } = await this.authService.signup(body);
+      // session.userId = user.id;
       return user;
     } catch (e) {
       if (e.message === 'Email in use')
@@ -47,9 +49,9 @@ export class UsersController {
   @Post('signin')
   async singinUser(@Body() body: CreateUserDto, @Session() session: any) {
     try {
-      const { id } = await this.authService.signin(body);
-      session.userId = id;
-      return { id };
+      const { user, token } = await this.authService.signin(body);
+      session.token = token;
+      return { ...user };
     } catch (e) {
       if (e instanceof UserNotFoundError) {
         throw new NotFoundException('Email not found');
@@ -62,14 +64,14 @@ export class UsersController {
   }
 
   @Get('whoami')
-  async whoami(@Session() session: any) {
-    if (!session.userId) throw new ForbiddenException();
-    return this.userService.findById(session.userId);
+  @UseGuards(AuthGuard)
+  async whoami(@Request() req: any) {
+    return this.userService.findById(req.user.sub);
   }
 
   @Post('signout')
   signOut(@Session() session: any) {
-    session.userId = null;
+    session.token = null;
   }
 
   @Get(':id')
