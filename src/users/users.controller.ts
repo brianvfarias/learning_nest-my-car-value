@@ -12,6 +12,7 @@ import {
   Query,
   Session,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -22,6 +23,9 @@ import { UserDto } from './dtos/user.dto';
 import { AuthService } from './auth.service';
 import { UserNotFoundError } from './errors/user-not-found.error';
 import { UserWrongPasswordError } from './errors/user-wrong-password.error';
+import { Prisma } from 'src/generated/prisma/client';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthGuard } from 'src/guard/auth.guard';
 
 @Controller('auth')
 @Serialize(UserDto)
@@ -60,10 +64,16 @@ export class UsersController {
     }
   }
 
+  // @Get('whoami')
+  // async whoAmI(@Session() session: any) {
+  //   if (!session.userId) throw new UnauthorizedException();
+  //   return this.userService.findById(session.userId);
+  // }
+
   @Get('whoami')
-  async whoAmI(@Session() session: any) {
-    if (!session.userId) throw new UnauthorizedException();
-    return this.userService.findById(session.userId);
+  @UseGuards(AuthGuard)
+  async WhoAmI(@CurrentUser() user: Prisma.UserSelect) {
+    return user;
   }
 
   @Post('signout')
