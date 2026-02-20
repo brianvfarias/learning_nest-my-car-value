@@ -26,6 +26,7 @@ import { UserWrongPasswordError } from './errors/user-wrong-password.error';
 import { Prisma } from 'src/generated/prisma/client';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { AuthGuard } from 'src/guard/auth.guard';
+import { EmailInUseError } from './errors/email-in-use.error';
 
 @Controller('auth')
 @Serialize(UserDto)
@@ -42,7 +43,7 @@ export class UsersController {
       session.userId = user.id;
       return user;
     } catch (e) {
-      if (e.message === 'Email in use')
+      if (e instanceof EmailInUseError)
         throw new ForbiddenException('Email in use');
     }
   }

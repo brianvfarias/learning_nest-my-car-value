@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { Prisma } from 'src/generated/prisma/client';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { randomBytes, scrypt } from 'node:crypto';
 import { promisify } from 'node:util';
 import { UserNotFoundError } from './errors/user-not-found.error';
 import { UserWrongPasswordError } from './errors/user-wrong-password.error';
+import { EmailInUseError } from './errors/email-in-use.error';
 
 const _scrypt = promisify(scrypt);
 
@@ -15,7 +15,7 @@ export class AuthService {
 
   async signup({ email, password }: CreateUserDto) {
     const checkUser = await this.usersService.findByEmail(email);
-    if (checkUser) throw new Error('Email in use');
+    if (checkUser) throw new EmailInUseError('Email in use');
     const salt = randomBytes(8).toString('hex');
 
     const hash = (await _scrypt(password, salt, 32)) as Buffer;
